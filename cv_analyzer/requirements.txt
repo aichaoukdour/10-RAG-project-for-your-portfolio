@@ -1,0 +1,9 @@
+#extract
+pymupdf==1.23.6
+
+#clean
+ftfy
+clean-text
+unidecode
+
+requests

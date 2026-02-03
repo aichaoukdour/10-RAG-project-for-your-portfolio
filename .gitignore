@@ -1,0 +1,21 @@
+# Environment
+venv/
+.env
+__pycache__/
+*.pyc
+
+# Project Specific
+cv_analyzer/data/
+cv_analyzer/*.json
+!cv_analyzer/src/*.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
