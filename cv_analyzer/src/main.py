@@ -2,7 +2,9 @@ from extractor import extract_text_from_pdf
 from cleaner import clean_cv_text_advanced
 from summarizer_llama import summarize_cv_llama
 from json_extractor_llama import extract_cv_json_llama
+from matcher_llama import compute_skill_match
 import os
+
 
 DATA_FOLDER = "./data"
 FALLBACK_PDF = "./data/cv.pdf"
@@ -34,11 +36,25 @@ def main():
     # Extract structured JSON
     cv_json = extract_cv_json_llama(cleaned_text_with_summary)
 
-    print("[*] Done! Result:")
-    import json
-    print(json.dumps(cv_json, indent=4, ensure_ascii=False))
+    # --- Skill Matching Feature ---
+    print("\n[*] --- Skill Matching Analysis ---")
+    sample_jd = """
+    We are looking for a Senior AI Engineer with experience in LLMs, RAG systems, and MLOps. 
+    Required skills include Python, PyTorch, Docker, and experience with cloud platforms like AWS or GCP.
+    Nice to have: Experience with agentic workflows and fine-tuning models.
+    """
+    
+    print("[*] Comparing CV with Job Description...")
+    match_result = compute_skill_match(cleaned_text, sample_jd)
+    
+    print("[*] Match Score:", match_result.get("match_score", "N/A"), "/ 100")
+    print("[*] Matched Skills:", ", ".join(match_result.get("matched_skills", [])))
+    print("[*] Missing Skills:", ", ".join(match_result.get("missing_skills", [])))
+    print("[*] Extra Skills:", ", ".join(match_result.get("extra_skills", [])))
 
-    return cv_json
+    print("\n[*] Done! Extraction completed.")
+    return cv_json, match_result
+
 
 
 
