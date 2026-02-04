@@ -5,10 +5,8 @@ def extract_cv_json_llama(text: str) -> dict:
     prompt = f"""
     Extract the following CV into JSON format.
     Keys: name, contact, email, linkedin, github, skills (list), experience (list of role, company, period, description), tools, summary
-
     CV Text:
     {text}
-
     Respond ONLY with valid JSON.
     """
     # Increase max_tokens for full JSON extraction
