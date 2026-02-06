@@ -1,0 +1,6 @@
+faiss-cpu
+langchain
+openai
+pandas
+python-dotenv
+sentence-transformers
