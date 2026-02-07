@@ -34,15 +34,7 @@ class RAGPipeline:
         data: pd.DataFrame,
         model: str = DEFAULT_LLM_MODEL
     ) -> None:
-        """
-        Initialize the RAG pipeline with all components.
-        
-        Args:
-            embedder: Embedder instance for query encoding.
-            vector_store: VectorStore with indexed documents.
-            data: DataFrame containing source text chunks.
-            model: LLM model name for generation.
-        """
+
         self.retriever = Retriever(embedder, vector_store, data)
         self.generator = Generator(model=model)
         self.fallback = LocalAdvisor()
@@ -56,17 +48,7 @@ class RAGPipeline:
         k: int = DEFAULT_TOP_K,
         use_fallback: bool = True
     ) -> Dict[str, Any]:
-        """
-        Execute the full RAG pipeline.
-        
-        Args:
-            query: User's question.
-            k: Number of context chunks to retrieve.
-            use_fallback: Whether to use LocalAdvisor if LLM fails.
-            
-        Returns:
-            Dictionary containing query, answer, context, scores, and metadata.
-        """
+
         logger.info("=" * 50)
         logger.info("Pipeline Execution Started")
         logger.info(f"Query: {query}")
@@ -120,19 +102,7 @@ class RAGPipeline:
         job_title: str,
         k: int = 5
     ) -> Dict[str, Any]:
-        """
-        Generate a high-level Career Insight Report for a job title.
-        
-        This is a standout feature that demonstrates domain-specific
-        RAG capabilities.
-        
-        Args:
-            job_title: The job title to analyze.
-            k: Number of similar records to retrieve.
-            
-        Returns:
-            Dictionary with the insight report and supporting data.
-        """
+
         logger.info(f"Generating Salary Insight Report for: {job_title}")
         
         # First, retrieve relevant salary data

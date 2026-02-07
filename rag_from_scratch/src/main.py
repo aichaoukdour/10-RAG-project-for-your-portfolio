@@ -1,7 +1,3 @@
-"""
-Main entry point for the RAG Career Advisor application.
-Provides an interactive CLI for querying salary and career information.
-"""
 import logging
 import os
 import sys
@@ -19,38 +15,14 @@ from config import (
     EMBEDDING_DIMENSION, OPENAI_API_KEY, setup_logging
 )
 
-# Load environment variables from .env file
+
 load_dotenv()
 
-# Setup module logger
-# Setup module logger
 logger = setup_logging()
 
 
-def check_api_key() -> bool:
-    """Check and warn about API key status."""
-    if not OPENAI_API_KEY:
-        print("\n" + "=" * 60)
-        print("⚠️  WARNING: OPENAI_API_KEY not found in environment")
-        print("=" * 60)
-        print("\nTo use the full LLM features, create a '.env' file with:")
-        print("  OPENAI_API_KEY=sk-your-key-here")
-        print("\nThe system will use the LocalAdvisor fallback for now.")
-        print("=" * 60 + "\n")
-        return False
-    return True
-
-
 def initialize_system() -> RAGPipeline:
-    """
-    Initialize or load all RAG components.
-    
-    Returns:
-        RAGPipeline: Fully initialized pipeline ready for queries.
-        
-    Raises:
-        FileNotFoundError: If raw data doesn't exist and no processed data.
-    """
+
     logger.info("Initializing RAG system...")
     
     # Check API key status
@@ -105,12 +77,6 @@ def display_menu() -> None:
 
 
 def run_interactive_session(advisor: RAGPipeline) -> None:
-    """
-    Run the interactive question-answering loop.
-    
-    Args:
-        advisor: Initialized RAGPipeline instance.
-    """
     while True:
         display_menu()
         

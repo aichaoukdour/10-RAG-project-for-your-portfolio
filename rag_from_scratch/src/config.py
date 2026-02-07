@@ -1,7 +1,3 @@
-"""
-Centralized configuration for the RAG pipeline.
-Removes magic numbers and provides a single source of truth.
-"""
 import os
 import logging
 from pathlib import Path
@@ -33,15 +29,6 @@ LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 
 def setup_logging(name: str = __name__) -> logging.Logger:
-    """
-    Setup logger with standard configuration.
-    
-    Args:
-        name: Name of the logger (usually __name__).
-        
-    Returns:
-        logging.Logger: Configured logger.
-    """
     logging.basicConfig(level=LOG_LEVEL, format=LOG_FORMAT)
     return logging.getLogger(name)
 
