@@ -1,6 +1,11 @@
 import os
 import logging
 from pathlib import Path
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
 
 # --- Project Paths ---
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -18,7 +23,7 @@ EMBEDDING_MODEL_NAME = "all-MiniLM-L6-v2"
 EMBEDDING_DIMENSION = 384  # Dimension for all-MiniLM-L6-v2
 
 # LLM Configuration
-DEFAULT_LLM_MODEL = "gpt-4o-mini"
+DEFAULT_LLM_MODEL = os.getenv("LLM_MODEL", "gpt-4o-mini")
 LLM_TEMPERATURE = 0  # Deterministic output for grounded answers
 
 # --- Retrieval Configuration ---
@@ -35,4 +40,5 @@ def setup_logging(name: str = __name__) -> logging.Logger:
 
 # --- API Configuration ---
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL")  # For Ollama compatibility
+OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")

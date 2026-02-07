@@ -1,7 +1,8 @@
 import logging
 from typing import List, Optional
 from openai import OpenAI, APIConnectionError, RateLimitError, AuthenticationError
-from config import OPENAI_API_KEY, OPENAI_BASE_URL, DEFAULT_LLM_MODEL, LLM_TEMPERATURE
+import google.generativeai as genai
+from config import OPENAI_API_KEY, OPENAI_BASE_URL, DEFAULT_LLM_MODEL, LLM_TEMPERATURE, GEMINI_API_KEY
 
 logger = logging.getLogger(__name__)
 
@@ -11,14 +12,27 @@ class Generator:
         self.model = model
         self.api_key = api_key or OPENAI_API_KEY
         self.base_url = base_url or OPENAI_BASE_URL
-        client_kwargs = {"api_key": self.api_key}
-        if self.base_url:
-            client_kwargs["base_url"] = self.base_url
-        self.client = OpenAI(**client_kwargs)
+        self.gemini_key = GEMINI_API_KEY
+
+        if "gemini" in self.model.lower():
+            if not self.gemini_key:
+                logger.error("GEMINI_API_KEY is missing")
+            else:
+                genai.configure(api_key=self.gemini_key)
+                self.gemini_model = genai.GenerativeModel(self.model)
+                logger.info(f"Initialized Gemini model: {self.model}")
+        else:
+            client_kwargs = {"api_key": self.api_key}
+            if self.base_url:
+                client_kwargs["base_url"] = self.base_url
+            self.client = OpenAI(**client_kwargs)
 
     def generate_answer(self, query: str, context_chunks: List[str], temperature: float = LLM_TEMPERATURE) -> str:
-        if not self.api_key:
+        if "gemini" in self.model.lower() and not self.gemini_key:
+             return "Error: GEMINI_API_KEY is missing."
+        if "gemini" not in self.model.lower() and not self.api_key:
             return "Error: OPENAI_API_KEY is missing."
+
         if not context_chunks:
             return "I don't have enough data to answer that."
 
@@ -35,6 +49,13 @@ QUESTION:
 ANSWER:"""
 
         try:
+            if "gemini" in self.model.lower():
+                 response = self.gemini_model.generate_content(
+                     prompt,
+                     generation_config=genai.types.GenerationConfig(temperature=temperature)
+                 )
+                 return response.text.strip()
+            # OpenAI logic
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=[
