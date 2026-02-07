@@ -9,10 +9,10 @@ from typing import Tuple
 import faiss
 import numpy as np
 
-from config import LOG_FORMAT, LOG_LEVEL
+
 
 # Setup module logger
-logging.basicConfig(level=LOG_LEVEL, format=LOG_FORMAT)
+# Setup module logger
 logger = logging.getLogger(__name__)
 
 

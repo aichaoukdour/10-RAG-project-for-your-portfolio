@@ -5,16 +5,15 @@ Supports OpenAI API with automatic fallback to local rule-based advisor.
 import logging
 from typing import List, Optional
 
-from openai import OpenAI
+from openai import OpenAI, APIConnectionError, RateLimitError, AuthenticationError
 
 from config import (
-    LOG_FORMAT, LOG_LEVEL, 
     OPENAI_API_KEY, OPENAI_BASE_URL,
     DEFAULT_LLM_MODEL, LLM_TEMPERATURE
 )
 
 # Setup module logger
-logging.basicConfig(level=LOG_LEVEL, format=LOG_FORMAT)
+# Setup module logger
 logger = logging.getLogger(__name__)
 
 
@@ -105,17 +104,18 @@ ANSWER:"""
             logger.info(f"Generated answer ({len(answer)} chars)")
             return answer
             
+        except AuthenticationError:
+            logger.error("Invalid OpenAI API key.")
+            return "Error: Invalid OpenAI API key. Please check your .env file."
+        except RateLimitError:
+            logger.error("OpenAI rate limit reached.")
+            return "Error: OpenAI rate limit reached. Please wait a moment and try again."
+        except APIConnectionError as e:
+            logger.error(f"Failed to connect to OpenAI: {e}")
+            return "Error: Failed to connect to OpenAI API. Please check your internet connection."
         except Exception as e:
-            error_msg = str(e)
-            logger.error(f"LLM generation failed: {error_msg}")
-            
-            if "insufficient_quota" in error_msg:
-                return "Error: Your OpenAI API quota has been exceeded. Please check your billing details."
-            elif "rate_limit_exceeded" in error_msg:
-                return "Error: OpenAI rate limit reached. Please wait a moment and try again."
-            elif "invalid_api_key" in error_msg:
-                return "Error: Invalid OpenAI API key. Please check your .env file."
-            return f"Error generating answer: {error_msg}"
+            logger.error(f"LLM generation failed: {e}")
+            return f"Error generating answer: {e}"
 
 
 class LocalAdvisor:

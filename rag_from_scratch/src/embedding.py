@@ -8,10 +8,10 @@ from typing import List, Union
 import numpy as np
 from sentence_transformers import SentenceTransformer
 
-from config import EMBEDDING_MODEL_NAME, LOG_FORMAT, LOG_LEVEL
+from config import EMBEDDING_MODEL_NAME
 
 # Setup module logger
-logging.basicConfig(level=LOG_LEVEL, format=LOG_FORMAT)
+# Setup module logger
 logger = logging.getLogger(__name__)
 
 

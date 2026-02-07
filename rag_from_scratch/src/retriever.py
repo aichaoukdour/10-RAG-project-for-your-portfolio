@@ -9,10 +9,10 @@ import pandas as pd
 
 from embedding import Embedder
 from vector_store import VectorStore
-from config import LOG_FORMAT, LOG_LEVEL, DEFAULT_TOP_K
+from config import DEFAULT_TOP_K
 
 # Setup module logger
-logging.basicConfig(level=LOG_LEVEL, format=LOG_FORMAT)
+# Setup module logger
 logger = logging.getLogger(__name__)
 
 

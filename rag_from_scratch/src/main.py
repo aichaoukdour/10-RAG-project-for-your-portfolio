@@ -9,22 +9,22 @@ import sys
 import pandas as pd
 from dotenv import load_dotenv
 
-from ingestion import load_data, clean_data, create_text_chunks, save_processed_data
+from ingestion import run_ingestion
 from embedding import Embedder
 from vector_store import VectorStore
 from pipeline import RAGPipeline
 from config import (
     LOG_FORMAT, LOG_LEVEL,
     PROCESSED_SALARIES_PATH, FAISS_INDEX_PATH, RAW_SALARIES_PATH,
-    EMBEDDING_DIMENSION, OPENAI_API_KEY
+    EMBEDDING_DIMENSION, OPENAI_API_KEY, setup_logging
 )
 
 # Load environment variables from .env file
 load_dotenv()
 
 # Setup module logger
-logging.basicConfig(level=LOG_LEVEL, format=LOG_FORMAT)
-logger = logging.getLogger(__name__)
+# Setup module logger
+logger = setup_logging()
 
 
 def check_api_key() -> bool:
@@ -64,10 +64,7 @@ def initialize_system() -> RAGPipeline:
     # 1. Data Ingestion & Cleaning
     if not os.path.exists(processed_path):
         logger.info("Processed data not found. Running data ingestion...")
-        df = load_data(raw_path)
-        df = clean_data(df)
-        df = create_text_chunks(df)
-        save_processed_data(df, processed_path)
+        df = run_ingestion(raw_path, processed_path)
     else:
         logger.info(f"Loading processed data from {processed_path}")
         df = pd.read_csv(processed_path)

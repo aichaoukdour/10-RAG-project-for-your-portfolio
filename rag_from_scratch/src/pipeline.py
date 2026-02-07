@@ -11,10 +11,10 @@ from embedding import Embedder
 from vector_store import VectorStore
 from retriever import Retriever
 from generator import Generator, LocalAdvisor
-from config import LOG_FORMAT, LOG_LEVEL, DEFAULT_TOP_K, DEFAULT_LLM_MODEL
+from config import DEFAULT_TOP_K, DEFAULT_LLM_MODEL
 
 # Setup module logger
-logging.basicConfig(level=LOG_LEVEL, format=LOG_FORMAT)
+# Setup module logger
 logger = logging.getLogger(__name__)
 
 
