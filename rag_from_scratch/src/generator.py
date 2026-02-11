@@ -1,10 +1,9 @@
 from abc import ABC, abstractmethod
-from typing import List, Optional, Protocol
-from openai import OpenAI, APIConnectionError, RateLimitError, AuthenticationError
+from typing import List, Optional
 import google.generativeai as genai
 from config import (
-    OPENAI_API_KEY, OPENAI_BASE_URL, DEFAULT_LLM_MODEL, 
-    LLM_TEMPERATURE, GEMINI_API_KEY, setup_logging
+    DEFAULT_LLM_MODEL, LLM_TEMPERATURE, 
+    GEMINI_API_KEY, setup_logging
 )
 
 logger = setup_logging(__name__)
@@ -14,54 +13,6 @@ class BaseGenerator(ABC):
     @abstractmethod
     def generate_answer(self, query: str, context_chunks: List[str], **kwargs) -> str:
         pass
-
-
-class OpenAIGenerator(BaseGenerator):
-    """Generator for OpenAI and compatible models."""
-    def __init__(self, model: str, api_key: str, base_url: Optional[str] = None):
-        self.model = model
-        client_kwargs = {"api_key": api_key}
-        if base_url:
-            client_kwargs["base_url"] = base_url
-        self.client = OpenAI(**client_kwargs)
-
-    def generate_answer(self, query: str, context_chunks: List[str], temperature: float = LLM_TEMPERATURE) -> str:
-        if not context_chunks:
-            return "I don't have enough data to answer that."
-
-        context_text = "\n---\n".join(context_chunks)
-        prompt = self._create_prompt(query, context_text)
-
-        try:
-            response = self.client.chat.completions.create(
-                model=self.model,
-                messages=[
-                    {"role": "system", "content": "You are a professional AI Career Advisor."},
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=temperature
-            )
-            return response.choices[0].message.content.strip()
-        except AuthenticationError:
-            return "Error: Invalid OpenAI API key."
-        except RateLimitError:
-            return "Error: OpenAI rate limit reached."
-        except APIConnectionError:
-            return "Error: Failed to connect to OpenAI API."
-        except Exception as e:
-            return f"Error generating answer: {e}"
-
-    def _create_prompt(self, query: str, context: str) -> str:
-        return f"""Answer the question ONLY using the provided context.
-If the answer is not in the context, say: 'I don't have enough data to answer that.'
-
-CONTEXT:
-{context}
-
-QUESTION:
-{query}
-
-ANSWER:"""
 
 
 class GeminiGenerator(BaseGenerator):
@@ -95,25 +46,20 @@ ANSWER:"""
             )
             return response.text.strip()
         except Exception as e:
+            logger.exception("Error during Gemini generation")
             return f"Error generating Gemini answer: {e}"
 
 
 class Generator(BaseGenerator):
-    """Unified generator interface that delegates to specific providers."""
+    """Unified generator interface for Gemini."""
     
-    def __init__(self, model: str = DEFAULT_LLM_MODEL, api_key: Optional[str] = None, base_url: Optional[str] = None):
-        if "gemini" in model.lower():
-            key = GEMINI_API_KEY
-            if not key:
-                logger.error("GEMINI_API_KEY is missing")
-                raise ValueError("GEMINI_API_KEY is required for Gemini models")
-            self._impl = GeminiGenerator(model, key)
-        else:
-            key = api_key or OPENAI_API_KEY
-            if not key:
-                logger.error("OPENAI_API_KEY is missing")
-                # We don't raise here for backward compatibility with existing tests that might mock client
-            self._impl = OpenAIGenerator(model, key, base_url)
+    def __init__(self, model: str = DEFAULT_LLM_MODEL, api_key: Optional[str] = None):
+        key = api_key or GEMINI_API_KEY
+        if not key:
+            logger.error("GEMINI_API_KEY is missing")
+            raise ValueError("GEMINI_API_KEY is required")
+            
+        self._impl = GeminiGenerator(model, key)
 
     def generate_answer(self, query: str, context_chunks: List[str], **kwargs) -> str:
         return self._impl.generate_answer(query, context_chunks, **kwargs)

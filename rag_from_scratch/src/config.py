@@ -23,7 +23,7 @@ EMBEDDING_MODEL_NAME = "all-MiniLM-L6-v2"
 EMBEDDING_DIMENSION = 384  # Dimension for all-MiniLM-L6-v2
 
 # LLM Configuration
-DEFAULT_LLM_MODEL = os.getenv("LLM_MODEL", "gpt-4o-mini")
+DEFAULT_LLM_MODEL = os.getenv("LLM_MODEL", "gemini-1.5-flash")
 LLM_TEMPERATURE = 0  # Deterministic output for grounded answers
 
 # --- Retrieval Configuration ---
@@ -66,6 +66,4 @@ REMOTE_RATIO_MAPPING = {
 }
 
 # --- API Configuration ---
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")

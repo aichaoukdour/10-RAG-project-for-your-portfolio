@@ -12,7 +12,7 @@ from pipeline import RAGPipeline
 from config import (
     LOG_FORMAT, LOG_LEVEL,
     PROCESSED_SALARIES_PATH, FAISS_INDEX_PATH, RAW_SALARIES_PATH,
-    EMBEDDING_DIMENSION, OPENAI_API_KEY, setup_logging
+    EMBEDDING_DIMENSION, setup_logging
 )
 
 

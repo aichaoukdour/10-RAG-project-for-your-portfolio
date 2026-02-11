@@ -6,7 +6,7 @@ A complete Retrieval-Augmented Generation (RAG) system built from scratch using 
 
 - **Semantic Search**: Uses sentence-transformers for high-quality embeddings
 - **FAISS Vector Store**: Efficient similarity search with L2-normalized vectors
-- **OpenAI Integration**: GPT-powered answer generation with context grounding
+- **Gemini Integration**: Google Gemini-powered answer generation with context grounding
 - **Fallback Mechanism**: LocalAdvisor for offline/no-credit scenarios
 - **Interactive CLI**: User-friendly command-line interface
 - **Modular Architecture**: Clean separation of concerns for easy extension
@@ -49,7 +49,7 @@ Create a `.env` file from the template:
 
 ```bash
 cp .env.example .env
-# Edit .env and add your OpenAI API key
+# Edit .env and add your Gemini API key
 ```
 
 > **Note**: The system works without an API key using the LocalAdvisor fallback!
@@ -99,7 +99,7 @@ pytest tests/ --cov=src --cov-report=html
 | `Embedder` | Converts text to 384-dim vectors using `all-MiniLM-L6-v2` |
 | `VectorStore` | FAISS IndexFlatIP for cosine similarity search |
 | `Retriever` | Combines embedding + search for semantic retrieval |
-| `Generator` | OpenAI GPT for grounded answer generation |
+| `Generator` | Google Gemini for grounded answer generation |
 | `LocalAdvisor` | Rule-based fallback when LLM is unavailable |
 | `RAGPipeline` | Orchestrates the full flow with error handling |
 
@@ -133,7 +133,7 @@ All settings are centralized in `src/config.py`:
 |---------|---------|-------------|
 | `EMBEDDING_MODEL_NAME` | `all-MiniLM-L6-v2` | Sentence transformer model |
 | `EMBEDDING_DIMENSION` | `384` | Vector dimensions |
-| `DEFAULT_LLM_MODEL` | `gpt-4o-mini` | OpenAI model for generation |
+| `DEFAULT_LLM_MODEL` | `gemini-1.5-flash` | Gemini model for generation |
 | `DEFAULT_TOP_K` | `5` | Number of chunks to retrieve |
 
 ## 📝 License
