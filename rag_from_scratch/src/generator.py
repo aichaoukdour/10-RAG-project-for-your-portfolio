@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Optional
+from typing import List, Optional, Protocol
 from openai import OpenAI, APIConnectionError, RateLimitError, AuthenticationError
 import google.generativeai as genai
 from config import (
@@ -11,66 +11,28 @@ logger = setup_logging(__name__)
 
 
 class BaseGenerator(ABC):
-    """Abstract base class for all answer generators."""
-    
     @abstractmethod
     def generate_answer(self, query: str, context_chunks: List[str], **kwargs) -> str:
-        """Generate an answer based on query and context."""
         pass
 
 
-class Generator(BaseGenerator):
-    """LLM-based generator supporting OpenAI and Gemini."""
-    
-    def __init__(self, model: str = DEFAULT_LLM_MODEL, api_key: Optional[str] = None, base_url: Optional[str] = None):
+class OpenAIGenerator(BaseGenerator):
+    """Generator for OpenAI and compatible models."""
+    def __init__(self, model: str, api_key: str, base_url: Optional[str] = None):
         self.model = model
-        self.api_key = api_key or OPENAI_API_KEY
-        self.base_url = base_url or OPENAI_BASE_URL
-        self.gemini_key = GEMINI_API_KEY
-
-        if "gemini" in self.model.lower():
-            if not self.gemini_key:
-                logger.error("GEMINI_API_KEY is missing")
-            else:
-                genai.configure(api_key=self.gemini_key)
-                self.gemini_model = genai.GenerativeModel(self.model)
-                logger.info(f"Initialized Gemini model: {self.model}")
-        else:
-            client_kwargs = {"api_key": self.api_key}
-            if self.base_url:
-                client_kwargs["base_url"] = self.base_url
-            self.client = OpenAI(**client_kwargs)
+        client_kwargs = {"api_key": api_key}
+        if base_url:
+            client_kwargs["base_url"] = base_url
+        self.client = OpenAI(**client_kwargs)
 
     def generate_answer(self, query: str, context_chunks: List[str], temperature: float = LLM_TEMPERATURE) -> str:
-        if "gemini" in self.model.lower() and not self.gemini_key:
-             return "Error: GEMINI_API_KEY is missing."
-        if "gemini" not in self.model.lower() and not self.api_key:
-            return "Error: OPENAI_API_KEY is missing."
-
         if not context_chunks:
             return "I don't have enough data to answer that."
 
         context_text = "\n---\n".join(context_chunks)
-        prompt = f"""Answer the question ONLY using the provided context.
-If the answer is not in the context, say: 'I don't have enough data to answer that.'
-
-CONTEXT:
-{context_text}
-
-QUESTION:
-{query}
-
-ANSWER:"""
+        prompt = self._create_prompt(query, context_text)
 
         try:
-            if "gemini" in self.model.lower():
-                 response = self.gemini_model.generate_content(
-                     prompt,
-                     generation_config=genai.types.GenerationConfig(temperature=temperature)
-                 )
-                 return response.text.strip()
-            
-            # OpenAI logic
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=[
@@ -89,6 +51,73 @@ ANSWER:"""
         except Exception as e:
             return f"Error generating answer: {e}"
 
+    def _create_prompt(self, query: str, context: str) -> str:
+        return f"""Answer the question ONLY using the provided context.
+If the answer is not in the context, say: 'I don't have enough data to answer that.'
+
+CONTEXT:
+{context}
+
+QUESTION:
+{query}
+
+ANSWER:"""
+
+
+class GeminiGenerator(BaseGenerator):
+    """Generator for Google Gemini models."""
+    def __init__(self, model: str, api_key: str):
+        self.model = model
+        genai.configure(api_key=api_key)
+        self.gemini_model = genai.GenerativeModel(self.model)
+        logger.info(f"Initialized Gemini model: {self.model}")
+
+    def generate_answer(self, query: str, context_chunks: List[str], temperature: float = LLM_TEMPERATURE) -> str:
+        if not context_chunks:
+            return "I don't have enough data to answer that."
+
+        context_text = "\n---\n".join(context_chunks)
+        prompt = f"""Answer the question ONLY using the provided context.
+If the answer is not in the context, say: 'I don't have enough data to answer that.'
+
+CONTEXT:
+{context_text}
+
+QUESTION:
+{query}
+
+ANSWER:"""
+
+        try:
+            response = self.gemini_model.generate_content(
+                prompt,
+                generation_config=genai.types.GenerationConfig(temperature=temperature)
+            )
+            return response.text.strip()
+        except Exception as e:
+            return f"Error generating Gemini answer: {e}"
+
+
+class Generator(BaseGenerator):
+    """Unified generator interface that delegates to specific providers."""
+    
+    def __init__(self, model: str = DEFAULT_LLM_MODEL, api_key: Optional[str] = None, base_url: Optional[str] = None):
+        if "gemini" in model.lower():
+            key = GEMINI_API_KEY
+            if not key:
+                logger.error("GEMINI_API_KEY is missing")
+                raise ValueError("GEMINI_API_KEY is required for Gemini models")
+            self._impl = GeminiGenerator(model, key)
+        else:
+            key = api_key or OPENAI_API_KEY
+            if not key:
+                logger.error("OPENAI_API_KEY is missing")
+                # We don't raise here for backward compatibility with existing tests that might mock client
+            self._impl = OpenAIGenerator(model, key, base_url)
+
+    def generate_answer(self, query: str, context_chunks: List[str], **kwargs) -> str:
+        return self._impl.generate_answer(query, context_chunks, **kwargs)
+
 
 class LocalAdvisor(BaseGenerator):
     """Fallback generator that provides summary of context without LLM."""
@@ -102,16 +131,6 @@ class LocalAdvisor(BaseGenerator):
             summary += f"• {chunk}\n"
         summary += "\n[Note: This answer was generated by the LocalAdvisor fallback.]"
         return summary
-
-
-if __name__ == "__main__":
-    advisor = LocalAdvisor()
-    mock_context = [
-        "In 2024, a Data Scientist in New York earns $150,000.",
-        "Senior Data Scientists can earn up to $200,000."
-    ]
-    answer = advisor.generate_answer("How much does a Data Scientist make?", mock_context)
-    print(f"LocalAdvisor Answer:\n{answer}")
 
 
 if __name__ == "__main__":

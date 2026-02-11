@@ -18,7 +18,6 @@ class Retriever:
         self.vector_store = vector_store
         self.data = data
         self.text_column = text_column
-        # Default scoring: use FAISS similarity directly
         self.score_fn = score_fn or (lambda text, base_score, idx: base_score)
 
     def search(self, query: str, k: int = DEFAULT_TOP_K) -> List[Dict[str, Any]]:
