@@ -1,7 +1,3 @@
-"""
-RAG Pipeline - Orchestrates the full Retrieval-Augmented Generation flow.
-Connects retrieval and generation with fallback handling.
-"""
 import logging
 from typing import Dict, List, Any, Optional
 
@@ -10,23 +6,15 @@ import pandas as pd
 from embedding import Embedder
 from vector_store import VectorStore
 from retriever import Retriever
-from generator import Generator, LocalAdvisor
-from config import DEFAULT_TOP_K, DEFAULT_LLM_MODEL
+from generator import BaseGenerator, Generator, LocalAdvisor
+from config import DEFAULT_TOP_K, DEFAULT_LLM_MODEL, setup_logging
 
 # Setup module logger
-# Setup module logger
-logger = logging.getLogger(__name__)
+logger = setup_logging(__name__)
 
 
 class RAGPipeline:
-    """
-    End-to-end RAG pipeline orchestrator.
-    
-    Flow: Query -> Retriever -> Context -> Generator -> Answer
-    
-    Includes automatic fallback to LocalAdvisor when LLM API fails.
-    """
-    
+   
     def __init__(
         self, 
         embedder: Embedder, 

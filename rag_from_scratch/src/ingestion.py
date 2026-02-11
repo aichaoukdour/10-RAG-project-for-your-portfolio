@@ -3,16 +3,13 @@ import os
 from typing import Callable
 import pandas as pd
 from chunks import create_text_chunks
-from config import (RAW_SALARIES_PATH, PROCESSED_SALARIES_PATH)
+from config import (
+    RAW_SALARIES_PATH, PROCESSED_SALARIES_PATH,
+    EXPERIENCE_MAPPING, EMPLOYMENT_MAPPING, COMPANY_SIZE_MAPPING,
+    setup_logging
+)
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
-logger = logging.getLogger(__name__)
-
-EXPERIENCE_MAPPING = {'EN': 'Entry-level', 'MI': 'Mid-level', 
-                      'SE': 'Senior-level', 'EX':'Executive-level'}
-EMPLOYMENT_MAPPING = {'FT': 'Full-time', 'PT': 'Part-time',
-                      'CT': 'Contract', 'FL': 'Freelance'}
-COMPANY_SIZE_MAPPING = {'S': 'small', 'M': 'medium', 'L': 'large'}
+logger = setup_logging(__name__)
 
 def load_data(file_path: str | None = None) -> pd.DataFrame:
     path = file_path or str(RAW_SALARIES_PATH)

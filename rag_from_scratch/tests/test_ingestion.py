@@ -4,13 +4,9 @@ Tests for the ingestion module.
 import pytest
 import pandas as pd
 
-from ingestion import (
-    clean_data, 
-    create_text_chunks,
-    EXPERIENCE_MAPPING,
-    EMPLOYMENT_MAPPING,
-    COMPANY_SIZE_MAPPING
-)
+from ingestion import clean_data
+from chunks import create_text_chunks
+from config import EXPERIENCE_MAPPING, EMPLOYMENT_MAPPING, COMPANY_SIZE_MAPPING
 
 
 class TestCleanData:

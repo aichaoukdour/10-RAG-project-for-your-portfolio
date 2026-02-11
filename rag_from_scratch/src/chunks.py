@@ -1,11 +1,9 @@
-import logging
 import pandas as pd
 from typing import Callable
+from config import REMOTE_RATIO_MAPPING, setup_logging
 
 # Setup module logger
-logger = logging.getLogger(__name__)
-
-REMOTE_RATIO_MAPPING = {100: 'remote', 50: 'hybrid', 0: 'on-site'}
+logger = setup_logging(__name__)
 
 
 def _serialize_row(row: pd.Series) -> str:

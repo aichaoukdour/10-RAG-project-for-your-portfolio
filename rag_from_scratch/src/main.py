@@ -22,48 +22,34 @@ logger = setup_logging()
 
 
 def initialize_system() -> RAGPipeline:
-
+    """Initialize the RAG system components and orchestrator."""
     logger.info("Initializing RAG system...")
     
-    # Check API key status
-    check_api_key()
-    
-    # Convert Path objects to strings for compatibility
-    processed_path = str(PROCESSED_SALARIES_PATH)
-    index_path = str(FAISS_INDEX_PATH)
-    raw_path = str(RAW_SALARIES_PATH)
-    
     # 1. Data Ingestion & Cleaning
-    if not os.path.exists(processed_path):
+    if not PROCESSED_SALARIES_PATH.exists():
         logger.info("Processed data not found. Running data ingestion...")
-        df = run_ingestion(raw_path, processed_path)
+        df = run_ingestion()
     else:
-        logger.info(f"Loading processed data from {processed_path}")
-        df = pd.read_csv(processed_path)
+        logger.info(f"Loading processed data from {PROCESSED_SALARIES_PATH}")
+        df = pd.read_csv(PROCESSED_SALARIES_PATH)
         logger.info(f"Loaded {len(df)} records")
     
     # 2. Initialize Embedder
     embedder = Embedder()
     
     # 3. Build or Load FAISS Index
-    if not os.path.exists(index_path):
+    store = VectorStore(dimension=EMBEDDING_DIMENSION)
+    if not FAISS_INDEX_PATH.exists():
         logger.info("Building FAISS index (this may take a moment)...")
-        text_chunks = df['text_chunk'].tolist()
-        embeddings = embedder.encode(text_chunks)
-        
-        dimension = embeddings.shape[1]
-        store = VectorStore(dimension)
+        embeddings = embedder.encode(df['text_chunk'].tolist())
         store.add(embeddings)
-        store.save(index_path)
+        store.save(str(FAISS_INDEX_PATH))
     else:
-        logger.info(f"Loading existing FAISS index from {index_path}")
-        store = VectorStore(dimension=EMBEDDING_DIMENSION)
-        store.load(index_path)
+        logger.info(f"Loading existing FAISS index from {FAISS_INDEX_PATH}")
+        store.load(str(FAISS_INDEX_PATH))
     
-    # 4. Create and return pipeline
-    pipeline = RAGPipeline(embedder, store, df)
-    logger.info("RAG system initialized successfully!")
-    return pipeline
+    # 4. Create pipeline
+    return RAGPipeline(embedder, store, df)
 
 
 def display_menu() -> None:

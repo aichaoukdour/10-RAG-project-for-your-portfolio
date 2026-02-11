@@ -38,6 +38,33 @@ def setup_logging(name: str = __name__) -> logging.Logger:
     return logging.getLogger(name)
 
 
+# --- Mapping Configurations ---
+EXPERIENCE_MAPPING = {
+    'EN': 'Entry-level', 
+    'MI': 'Mid-level', 
+    'SE': 'Senior-level', 
+    'EX': 'Executive-level'
+}
+
+EMPLOYMENT_MAPPING = {
+    'FT': 'Full-time', 
+    'PT': 'Part-time',
+    'CT': 'Contract', 
+    'FL': 'Freelance'
+}
+
+COMPANY_SIZE_MAPPING = {
+    'S': 'small', 
+    'M': 'medium', 
+    'L': 'large'
+}
+
+REMOTE_RATIO_MAPPING = {
+    100: 'remote', 
+    50: 'hybrid', 
+    0: 'on-site'
+}
+
 # --- API Configuration ---
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL")
