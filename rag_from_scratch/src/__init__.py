@@ -11,15 +11,17 @@ This package provides:
 from .embedding import Embedder
 from .vector_store import VectorStore
 from .retriever import Retriever
-from .generator import Generator, LocalAdvisor
+from .generator import Generator, GenerationError, LocalAdvisor
 from .pipeline import RAGPipeline
-from .ingestion import load_data, clean_data, create_text_chunks
+from .ingestion import load_data, clean_data
+from .chunks import create_text_chunks
 
 __all__ = [
     "Embedder",
     "VectorStore", 
     "Retriever",
     "Generator",
+    "GenerationError",
     "LocalAdvisor",
     "RAGPipeline",
     "load_data",
