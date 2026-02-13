@@ -1,5 +1,5 @@
+import hashlib
 import logging
-import os
 import sys
 
 import pandas as pd
@@ -16,7 +16,29 @@ from config import (
 )
 
 load_dotenv()
-logger = setup_logging()
+setup_logging()
+logger = logging.getLogger(__name__)
+
+
+def _file_hash(path) -> str:
+    """Return the MD5 hex digest of a file for staleness detection."""
+    h = hashlib.md5()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(8192), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+HASH_SIDECAR = FAISS_INDEX_PATH.with_suffix(".hash")
+
+
+def _index_is_stale(csv_path) -> bool:
+    """Return True if the FAISS index does not match the current CSV."""
+    if not HASH_SIDECAR.exists():
+        return True
+    stored = HASH_SIDECAR.read_text().strip()
+    return stored != _file_hash(csv_path)
+
 
 def initialize_system() -> RAGPipeline:
     """Initialize the RAG system components and orchestrator."""
@@ -29,13 +51,22 @@ def initialize_system() -> RAGPipeline:
         df = pd.read_csv(PROCESSED_SALARIES_PATH)
     
     embedder = Embedder()
-    store = VectorStore(dimension=EMBEDDING_DIMENSION)
+
+    # Validate that config dimension matches the model
+    assert embedder.dimension == EMBEDDING_DIMENSION, (
+        f"Model dimension ({embedder.dimension}) != config EMBEDDING_DIMENSION ({EMBEDDING_DIMENSION})"
+    )
+
+    store = VectorStore(dimension=embedder.dimension)
     
-    if not FAISS_INDEX_PATH.exists():
+    if not FAISS_INDEX_PATH.exists() or _index_is_stale(PROCESSED_SALARIES_PATH):
+        if FAISS_INDEX_PATH.exists():
+            logger.warning("FAISS index is stale — rebuilding.")
         logger.info("Building knowledge base index...")
         embeddings = embedder.encode(df['text_chunk'].tolist())
         store.add(embeddings)
         store.save(str(FAISS_INDEX_PATH))
+        HASH_SIDECAR.write_text(_file_hash(PROCESSED_SALARIES_PATH))
     else:
         store.load(str(FAISS_INDEX_PATH))
     
