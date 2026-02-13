@@ -1,12 +1,16 @@
+import logging
 from typing import List, Union
+
 import numpy as np
 from sentence_transformers import SentenceTransformer
 from config import EMBEDDING_MODEL_NAME
 
+logger = logging.getLogger(__name__)
+
 
 class Embedder:
 
-    def __init__(self, model_name: str = EMBEDDING_MODEL_NAME, device: str | None = None) -> None:
+    def __init__(self, model_name: str = EMBEDDING_MODEL_NAME, device: Union[str, None] = None) -> None:
         self.model = SentenceTransformer(model_name, device=device)
 
     def encode(
@@ -22,17 +26,11 @@ class Embedder:
         embeddings = self.model.encode(
             texts,
             show_progress_bar=show_progress,
-            batch_size=batch_size
+            batch_size=batch_size,
+            normalize_embeddings=normalize,
         )
 
-        embeddings = np.array(embeddings, dtype="float32", copy=False)
-
-        if normalize:
-            norms = np.linalg.norm(embeddings, axis=1, keepdims=True)
-            norms = np.where(norms == 0, 1, norms)
-            embeddings /= norms
-
-        return embeddings
+        return np.array(embeddings, dtype="float32", copy=False)
 
     @property
     def dimension(self) -> int:
