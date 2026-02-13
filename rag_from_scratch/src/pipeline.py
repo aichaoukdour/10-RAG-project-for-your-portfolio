@@ -1,16 +1,15 @@
 import logging
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any
 
 import pandas as pd
 
 from embedding import Embedder
 from vector_store import VectorStore
 from retriever import Retriever
-from generator import BaseGenerator, Generator, LocalAdvisor
-from config import DEFAULT_TOP_K, DEFAULT_LLM_MODEL, setup_logging
+from generator import BaseGenerator, Generator, GenerationError, LocalAdvisor
+from config import DEFAULT_TOP_K, DEFAULT_LLM_MODEL
 
-# Setup module logger
-logger = setup_logging(__name__)
+logger = logging.getLogger(__name__)
 
 
 class RAGPipeline:
@@ -62,16 +61,18 @@ class RAGPipeline:
         for i, res in enumerate(retrieval_results):
             logger.debug(f"Chunk {i+1} (Score: {res['score']:.4f}): {res['text'][:80]}...")
 
-        # 2. Generation Phase
+        # 2. Generation Phase (with exception-based fallback)
         logger.info("Generating grounded answer...")
-        answer = self.generator.generate_answer(query, context_chunks)
         source = "llm"
-
-        # 3. Fallback handling
-        if use_fallback and answer.startswith("Error:"):
-            logger.warning(f"LLM failed: {answer}. Switching to LocalAdvisor.")
-            answer = self.fallback.generate_answer(query, context_chunks)
-            source = "fallback"
+        try:
+            answer = self.generator.generate_answer(query, context_chunks)
+        except GenerationError as e:
+            if use_fallback:
+                logger.warning(f"LLM failed: {e}. Switching to LocalAdvisor.")
+                answer = self.fallback.generate_answer(query, context_chunks)
+                source = "fallback"
+            else:
+                raise
 
         logger.info(f"Answer generated via: {source}")
         logger.info("Pipeline Execution Finished")
@@ -93,10 +94,19 @@ class RAGPipeline:
 
         logger.info(f"Generating Salary Insight Report for: {job_title}")
         
-        # First, retrieve relevant salary data
+        # Retrieve relevant salary data (retriever only — no LLM call here)
         query = f"What is the average salary and common remote work status for {job_title}?"
-        results = self.run(query, k=k)
-        
+        retrieval_results = self.retriever.search(query, k=k)
+        context_chunks = [res['text'] for res in retrieval_results]
+
+        if not context_chunks:
+            return {
+                "job_title": job_title,
+                "report": "No relevant salary data found.",
+                "supporting_data": [],
+                "num_records_analyzed": 0
+            }
+
         # Generate a structured insight report
         insight_prompt = f"""Summarize the following data into a high-level Career Insight Report for: {job_title}
 
@@ -109,21 +119,20 @@ Include:
 Format your response clearly with bullet points or sections.
 
 CONTEXT:
-{chr(10).join(results['context'])}
+{chr(10).join(context_chunks)}
 """
         
-        report = self.generator.generate_answer(insight_prompt, results['context'])
-        
-        # Fallback for insight reports too
-        if report.startswith("Error:"):
+        try:
+            report = self.generator.generate_answer(insight_prompt, context_chunks)
+        except GenerationError:
             logger.warning("Falling back to LocalAdvisor for insight report")
-            report = self._generate_local_insight(job_title, results['context'])
+            report = self._generate_local_insight(job_title, context_chunks)
         
         return {
             "job_title": job_title,
             "report": report,
-            "supporting_data": results['context'],
-            "num_records_analyzed": len(results['context'])
+            "supporting_data": context_chunks,
+            "num_records_analyzed": len(context_chunks)
         }
 
     def _generate_local_insight(
