@@ -1,9 +1,10 @@
-import pandas as pd
-from typing import Callable
-from config import REMOTE_RATIO_MAPPING, setup_logging
+import logging
+from typing import Callable, Optional
 
-# Setup module logger
-logger = setup_logging(__name__)
+import pandas as pd
+from config import REMOTE_RATIO_MAPPING
+
+logger = logging.getLogger(__name__)
 
 
 def _serialize_row(row: pd.Series) -> str:
@@ -23,7 +24,7 @@ def _serialize_row(row: pd.Series) -> str:
 
 def create_text_chunks(
     df: pd.DataFrame,
-    chunk_fn: Callable[[pd.Series], str] | None = None
+    chunk_fn: Optional[Callable[[pd.Series], str]] = None
 ) -> pd.DataFrame:
     chunk_function = chunk_fn or _serialize_row
     df = df.copy() 
