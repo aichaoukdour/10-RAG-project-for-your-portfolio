@@ -33,9 +33,14 @@ DEFAULT_TOP_K = 5  # Number of chunks to retrieve
 LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 
-def setup_logging(name: str = __name__) -> logging.Logger:
+
+def setup_logging() -> None:
+    """Configure logging once for the entire application.
+
+    Should be called once from main.py at startup. Individual modules
+    should use ``logging.getLogger(__name__)`` to get their own loggers.
+    """
     logging.basicConfig(level=LOG_LEVEL, format=LOG_FORMAT)
-    return logging.getLogger(name)
 
 
 # --- Mapping Configurations ---
