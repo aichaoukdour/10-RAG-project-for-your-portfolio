@@ -3,10 +3,16 @@ from typing import List, Optional
 import google.generativeai as genai
 from config import (
     DEFAULT_LLM_MODEL, LLM_TEMPERATURE, 
-    GEMINI_API_KEY, setup_logging
+    GEMINI_API_KEY
 )
 
-logger = setup_logging(__name__)
+import logging
+logger = logging.getLogger(__name__)
+
+
+class GenerationError(Exception):
+    """Raised when LLM generation fails."""
+    pass
 
 
 class BaseGenerator(ABC):
@@ -16,8 +22,8 @@ class BaseGenerator(ABC):
 
 
 class GeminiGenerator(BaseGenerator):
-    """Generator for Google Gemini models."""
-    def __init__(self, model: str, api_key: str):
+
+    def __init__(self, model: str, api_key: str) -> None:
         self.model = model
         genai.configure(api_key=api_key)
         self.gemini_model = genai.GenerativeModel(self.model)
@@ -47,13 +53,12 @@ ANSWER:"""
             return response.text.strip()
         except Exception as e:
             logger.exception("Error during Gemini generation")
-            return f"Error generating Gemini answer: {e}"
+            raise GenerationError(f"Gemini generation failed: {e}") from e
 
 
 class Generator(BaseGenerator):
-    """Unified generator interface for Gemini."""
-    
-    def __init__(self, model: str = DEFAULT_LLM_MODEL, api_key: Optional[str] = None):
+
+    def __init__(self, model: str = DEFAULT_LLM_MODEL, api_key: Optional[str] = None) -> None:
         key = api_key or GEMINI_API_KEY
         if not key:
             logger.error("GEMINI_API_KEY is missing")
@@ -66,8 +71,7 @@ class Generator(BaseGenerator):
 
 
 class LocalAdvisor(BaseGenerator):
-    """Fallback generator that provides summary of context without LLM."""
-    
+
     def generate_answer(self, query: str, context_chunks: List[str], max_chunks: int = 3, **kwargs) -> str:
         if not context_chunks:
             return "I don't have enough data in my local knowledge base to answer that."
