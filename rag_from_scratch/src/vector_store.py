@@ -1,5 +1,6 @@
-import os
+from pathlib import Path
 from typing import Tuple
+
 import faiss
 import numpy as np
 
@@ -22,17 +23,16 @@ class VectorStore:
         return scores, indices
 
     def save(self, path: str) -> None:
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-        faiss.write_index(self.index, path)
+        p = Path(path)
+        p.parent.mkdir(parents=True, exist_ok=True)
+        faiss.write_index(self.index, str(p))
 
     def load(self, path: str) -> None:
-        if not os.path.exists(path):
+        p = Path(path)
+        if not p.exists():
             raise FileNotFoundError(f"Index not found at {path}")
-        self.index = faiss.read_index(path)
+        self.index = faiss.read_index(str(p))
 
     @property
     def size(self) -> int:
         return self.index.ntotal
-
-
-
