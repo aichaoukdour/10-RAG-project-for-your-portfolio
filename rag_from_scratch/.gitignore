@@ -4,3 +4,4 @@ data/processed/*
 !data/processed/.gitkeep
 notebooks/.ipynb_checkpoints/
 *.pyc
+.pytest_cache/

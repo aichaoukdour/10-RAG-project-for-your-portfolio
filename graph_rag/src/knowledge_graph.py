@@ -4,8 +4,6 @@ from typing import List, Dict, Any
 
 logger = logging.getLogger(__name__)
 
-# Module-level directed graph — shared across the application.
-# The retrieval function accesses this directly via `kg.nodes`, `kg.successors()`, etc.
 kg = nx.DiGraph()
 
 
@@ -13,8 +11,7 @@ class KnowledgeGraph:
     """Manages the module-level NetworkX knowledge graph."""
 
     def __init__(self):
-        self.graph = kg  # reference the shared module-level graph
-
+        self.graph = kg 
     def add_triples(self, triples: List[Dict[str, str]]):
         """Adds a list of (head, relation, tail) triples to the graph."""
         for item in triples:
